@@ -1,34 +1,31 @@
 #!/bin/bash
 
-INPUT_FILE=$1
+REPO_DIR="$HOME/chatrepo"
 
-if [ ! -f "$INPUT_FILE" ]; then
-    exit 1
-fi
+cd "$REPO_DIR" || exit 1
 
-mkdir -p requests
-mkdir -p responses
+read -p "Pytanie: " QUESTION
 
-ID=$(date +%s)
+echo "$QUESTION" > pytanie.txt
 
-cp "$INPUT_FILE" "requests/$ID.txt"
-
-git add requests/$ID.txt
-git commit -m "task-$ID" >/dev/null 2>&1
+git add pytanie.txt
+git commit -m "Nowe pytanie" >/dev/null 2>&1
 git push >/dev/null 2>&1
+
+echo "Oczekiwanie na odpowiedź..."
 
 while true
 do
     git pull >/dev/null 2>&1
 
-    if [ -f "responses/$ID.txt" ]; then
-
-        cp "responses/$ID.txt" "odpowiedz.txt"
-
+    if [ -f odp.txt ] && [ -s odp.txt ]; then
+        echo
+        echo "========== ODPOWIEDŹ =========="
+        cat odp.txt
+        echo
+        echo "==============================="
         break
     fi
 
-    sleep 5
+    sleep 3
 done
-
-exit 0
