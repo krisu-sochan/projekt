@@ -1,8 +1,6 @@
 #!/bin/bash
 
-REPO_DIR="$HOME/chatrepo"
 
-cd "$REPO_DIR" || exit 1
 
 read -p "Pytanie: " QUESTION
 
