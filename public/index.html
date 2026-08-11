@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Scala ze zdjęcia</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, sans-serif;
+      background: #f2f4f8;
+      color: #172033;
+    }
+    .container {
+      width: min(900px, 92%);
+      margin: 40px auto;
+    }
+    .card {
+      background: white;
+      border-radius: 18px;
+      padding: 28px;
+      box-shadow: 0 12px 35px rgba(0,0,0,.08);
+    }
+    h1 { margin-top: 0; }
+    .upload {
+      display: block;
+      padding: 30px;
+      border: 2px dashed #8b96aa;
+      border-radius: 14px;
+      text-align: center;
+      cursor: pointer;
+      background: #fafbfc;
+    }
+    .upload:hover { background: #f4f6fa; }
+    input[type=file] { display: none; }
+    #preview {
+      display: none;
+      max-width: 100%;
+      max-height: 420px;
+      margin: 20px auto 0;
+      border-radius: 12px;
+    }
+    button {
+      width: 100%;
+      margin-top: 20px;
+      padding: 15px;
+      border: 0;
+      border-radius: 12px;
+      background: #172033;
+      color: white;
+      font-size: 17px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:disabled {
+      opacity: .55;
+      cursor: not-allowed;
+    }
+    #status {
+      margin-top: 18px;
+      font-weight: bold;
+    }
+    #result {
+      display: none;
+      margin-top: 22px;
+      padding: 20px;
+      border-radius: 12px;
+      background: #101522;
+      color: #eef3ff;
+      white-space: pre-wrap;
+      overflow-x: auto;
+      line-height: 1.5;
+    }
+    .copy {
+      display: none;
+      background: #e8ecf4;
+      color: #172033;
+    }
+    .github-box {
+      display: none;
+      margin-top: 24px;
+      padding: 20px;
+      border: 1px solid #dce1ea;
+      border-radius: 12px;
+      background: #fafbfc;
+    }
+    .github-box h2 { margin-top: 0; font-size: 20px; }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    input[type=text] {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #cbd2df;
+      border-radius: 9px;
+      font-size: 15px;
+    }
+    .field { margin-top: 12px; }
+    .field label { display: block; margin-bottom: 5px; font-weight: bold; }
+    #githubStatus a { color: #172033; font-weight: bold; }
+    @media (max-width: 650px) { .grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <section class="card">
+      <h1>Scala ze zdjęcia</h1>
+      <p>Wrzuć zdjęcie zadania, a strona odczyta jego treść i przygotuje pełne rozwiązanie.</p>
+
+      <label class="upload" for="image">
+        <strong>Kliknij i wybierz zdjęcie</strong>
+        <br><small>JPG, PNG lub zdjęcie z telefonu</small>
+      </label>
+
+      <input id="image" type="file" accept="image/*" capture="environment" />
+      <img id="preview" alt="Podgląd zdjęcia" />
+
+      <button id="solve" disabled>Rozwiąż zadanie</button>
+      <div id="status"></div>
+      <pre id="result"></pre>
+      <button id="copy" class="copy">Kopiuj odpowiedź</button>
+
+      <section id="githubBox" class="github-box">
+        <h2>Wyślij kod na GitHuba</h2>
+        <div class="grid">
+          <div class="field">
+            <label for="owner">Nazwa użytkownika GitHub</label>
+            <input id="owner" type="text" placeholder="np. krisu123" />
+          </div>
+          <div class="field">
+            <label for="repo">Repozytorium</label>
+            <input id="repo" type="text" placeholder="np. zadania-scala" />
+          </div>
+          <div class="field">
+            <label for="branch">Branch</label>
+            <input id="branch" type="text" value="main" />
+          </div>
+          <div class="field">
+            <label for="filePath">Ścieżka pliku</label>
+            <input id="filePath" type="text" value="src/main/scala/Main.scala" />
+          </div>
+        </div>
+        <div class="field">
+          <label for="commitMessage">Opis commita</label>
+          <input id="commitMessage" type="text" value="Dodanie rozwiązania zadania ze zdjęcia" />
+        </div>
+        <button id="pushGithub">Wyślij na GitHuba</button>
+        <div id="githubStatus"></div>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    const imageInput = document.querySelector("#image");
+    const preview = document.querySelector("#preview");
+    const solveButton = document.querySelector("#solve");
+    const status = document.querySelector("#status");
+    const result = document.querySelector("#result");
+    const copyButton = document.querySelector("#copy");
+    const githubBox = document.querySelector("#githubBox");
+    const pushGithub = document.querySelector("#pushGithub");
+    const githubStatus = document.querySelector("#githubStatus");
+    let generatedCode = "";
+
+    imageInput.addEventListener("change", () => {
+      const file = imageInput.files[0];
+      if (!file) return;
+
+      preview.src = URL.createObjectURL(file);
+      preview.style.display = "block";
+      solveButton.disabled = false;
+      status.textContent = "";
+      result.style.display = "none";
+      copyButton.style.display = "none";
+      githubBox.style.display = "none";
+      generatedCode = "";
+    });
+
+    solveButton.addEventListener("click", async () => {
+      const file = imageInput.files[0];
+      if (!file) return;
+
+      const formData = new FormData();
+      formData.append("image", file);
+
+      solveButton.disabled = true;
+      status.textContent = "Odczytuję zadanie i tworzę kod...";
+      result.style.display = "none";
+      copyButton.style.display = "none";
+
+      try {
+        const response = await fetch("/api/solve", {
+          method: "POST",
+          body: formData
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || "Wystąpił błąd.");
+        }
+
+        result.textContent = data.result;
+        const codeMatch = data.result.match(/```scala\s*([\s\S]*?)```/i);
+        generatedCode = codeMatch ? codeMatch[1].trim() : data.result.trim();
+        result.style.display = "block";
+        copyButton.style.display = "block";
+        githubBox.style.display = "block";
+        status.textContent = "Gotowe.";
+      } catch (error) {
+        status.textContent = "Błąd: " + error.message;
+      } finally {
+        solveButton.disabled = false;
+      }
+    });
+
+    copyButton.addEventListener("click", async () => {
+      await navigator.clipboard.writeText(result.textContent);
+      copyButton.textContent = "Skopiowano!";
+      setTimeout(() => copyButton.textContent = "Kopiuj odpowiedź", 1500);
+    });
+
+    pushGithub.addEventListener("click", async () => {
+      const payload = {
+        owner: document.querySelector("#owner").value.trim(),
+        repo: document.querySelector("#repo").value.trim(),
+        branch: document.querySelector("#branch").value.trim(),
+        path: document.querySelector("#filePath").value.trim(),
+        message: document.querySelector("#commitMessage").value.trim(),
+        content: generatedCode
+      };
+
+      if (!payload.owner || !payload.repo || !payload.path) {
+        githubStatus.textContent = "Uzupełnij użytkownika, repozytorium i ścieżkę pliku.";
+        return;
+      }
+
+      pushGithub.disabled = true;
+      githubStatus.textContent = "Wysyłam kod na GitHuba...";
+
+      try {
+        const response = await fetch("/api/github/push", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "Nie udało się wysłać kodu.");
+        githubStatus.innerHTML = `${data.message} <a href="${data.url}" target="_blank" rel="noopener">Otwórz plik</a>`;
+      } catch (error) {
+        githubStatus.textContent = "Błąd: " + error.message;
+      } finally {
+        pushGithub.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
