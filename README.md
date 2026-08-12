@@ -1,33 +1,25 @@
-# Scala ze zdjęcia + GitHub
+# Scala Photo Solver – auto GitHub
 
-Strona odczytuje zadanie ze zdjęcia, generuje kod Scala 3 i pozwala wysłać gotowy plik do repozytorium GitHub.
+## Najlepszy układ
+- `projekt` – repo z tą stroną, podpięte do Render
+- `zadania-scala` – osobne repo na wygenerowane zadania
 
-## Uruchomienie
+## Render / Environment Variables
+OPENAI_API_KEY=...
+OPENAI_MODEL=gpt-5-mini
+GITHUB_TOKEN=...
+GITHUB_OWNER=twoj_login
+GITHUB_REPO=zadania-scala
+GITHUB_BRANCH=main
 
-1. Zainstaluj Node.js.
-2. Otwórz terminal w folderze projektu.
-3. Wpisz `npm install`.
-4. Skopiuj `.env.example` jako `.env`.
-5. Wpisz w `.env` klucz OpenAI oraz token GitHub.
-6. Uruchom `npm start`.
-7. Otwórz `http://localhost:3000`.
+Token GitHub: dostęp tylko do repo `zadania-scala`, permission `Contents: Read and write`.
 
-## Token GitHub
+## Laptop
+Pierwszy raz:
+`git clone https://github.com/TWOJ_LOGIN/zadania-scala.git`
 
-Utwórz fine-grained personal access token tylko dla wybranego repozytorium. Nadaj mu uprawnienie:
+Później:
+`cd zadania-scala`
+`git pull`
 
-- Repository permissions → Contents → Read and write
-
-Nie umieszczaj tokenu w pliku HTML. Token powinien pozostać tylko w `.env` na serwerze.
-
-## Wysyłanie kodu
-
-Po wygenerowaniu rozwiązania wpisz:
-
-- nazwę użytkownika GitHub,
-- nazwę repozytorium,
-- branch, zwykle `main`,
-- ścieżkę, np. `src/main/scala/Main.scala`,
-- opis commita.
-
-Przycisk „Wyślij na GitHuba” utworzy plik albo zaktualizuje istniejący.
+Każde zadanie trafia do `zadania/<data>_<tytul>/Main.scala`.

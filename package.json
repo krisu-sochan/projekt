@@ -1,12 +1,9 @@
 {
-  "name": "scala-photo-solver",
-  "version": "1.0.0",
+  "name": "scala-photo-solver-auto-github",
+  "version": "2.0.0",
   "private": true,
   "type": "module",
-  "scripts": {
-    "start": "node server.js",
-    "dev": "node --watch server.js"
-  },
+  "scripts": {"start": "node server.js", "dev": "node --watch server.js"},
   "dependencies": {
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
