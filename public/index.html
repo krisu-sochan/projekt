@@ -1,9 +1,76 @@
-<!doctype html><html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Scala ze zdjęcia</title><style>
-body{font-family:Arial,sans-serif;background:#f3f5f8;margin:0;color:#172033}.wrap{max-width:900px;margin:30px auto;padding:0 16px}.card{background:white;padding:24px;border-radius:18px;box-shadow:0 10px 30px #0001}.upload{display:block;padding:32px;border:2px dashed #8994a7;border-radius:14px;text-align:center;cursor:pointer}input{display:none}img{display:none;max-width:100%;max-height:420px;margin:18px auto;border-radius:12px}button,a{display:block;width:100%;box-sizing:border-box;margin-top:16px;padding:14px;border:0;border-radius:12px;background:#172033;color:white;text-align:center;text-decoration:none;font-weight:bold}button:disabled{opacity:.5}pre{display:none;background:#101522;color:#eef3ff;padding:18px;border-radius:12px;white-space:pre-wrap;overflow:auto}.box{background:#eef2f7;padding:12px;border-radius:10px;margin-bottom:16px}.ok{background:#eef8ef}.warn{background:#fff4e5}#copy,#gh{display:none}
-</style></head><body><main class="wrap"><section class="card"><h1>Scala ze zdjęcia</h1><p>Zdjęcie → rozwiązanie → automatyczny commit do GitHuba.</p><div id="repo" class="box">Sprawdzam GitHub...</div><label class="upload" for="img">📷 <b>Zrób zdjęcie albo wybierz z galerii</b></label><input id="img" type="file" accept="image/*" capture="environment"><img id="preview"><button id="solve" disabled>Rozwiąż i wyślij na GitHub</button><div id="status"></div><div id="ghstatus" class="box" style="display:none"></div><pre id="result"></pre><button id="copy">Kopiuj kod Scala</button><a id="gh" target="_blank" rel="noopener">Otwórz na GitHubie</a></section></main><script>
-const img=document.querySelector('#img'),preview=document.querySelector('#preview'),solve=document.querySelector('#solve'),status=document.querySelector('#status'),ghs=document.querySelector('#ghstatus'),result=document.querySelector('#result'),copy=document.querySelector('#copy'),gh=document.querySelector('#gh'),repo=document.querySelector('#repo');let code='';
-fetch('/api/config').then(r=>r.json()).then(c=>repo.textContent=c.autoPush?`Zapis automatyczny: ${c.owner}/${c.repo} → ${c.branch}`:'GitHub nie jest skonfigurowany.').catch(()=>repo.textContent='Błąd konfiguracji GitHub.');
-img.onchange=()=>{if(!img.files[0])return;preview.src=URL.createObjectURL(img.files[0]);preview.style.display='block';solve.disabled=false};
-solve.onclick=async()=>{const fd=new FormData();fd.append('image',img.files[0]);solve.disabled=true;status.textContent='Generuję rozwiązanie...';result.style.display=copy.style.display=gh.style.display='none';ghs.style.display='none';try{const r=await fetch('/api/solve',{method:'POST',body:fd});const d=await r.json();if(!r.ok)throw new Error(d.error||'Błąd');code=d.code||'';result.textContent=d.result;result.style.display='block';copy.style.display='block';status.textContent='✅ Gotowe';ghs.style.display='block';if(d.github){ghs.className='box ok';ghs.textContent=`✅ Zapisano: ${d.github.path}`;gh.href=d.github.url;gh.style.display='block'}else{ghs.className='box warn';ghs.textContent='⚠️ GitHub: '+(d.githubError||'błąd')}}catch(e){status.textContent='❌ '+e.message}finally{solve.disabled=false}};
-copy.onclick=async()=>{await navigator.clipboard.writeText(code);copy.textContent='Skopiowano';setTimeout(()=>copy.textContent='Kopiuj kod Scala',1200)};
-</script></body></html>
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Scala ze zdjęcia</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f3f5f8;color:#172033;font-family:Arial,sans-serif}
+main{width:min(980px,94%);margin:28px auto}.card{background:#fff;padding:24px;border-radius:18px;box-shadow:0 10px 30px #0001}
+h1{margin:0 0 8px}.sub{color:#657083}.repo{background:#eef2f7;padding:12px;border-radius:10px;margin:18px 0}
+.upload{display:block;border:2px dashed #8b96a8;border-radius:14px;padding:32px;text-align:center;cursor:pointer;background:#fafbfd}
+input{display:none}#preview{display:none;max-width:100%;max-height:460px;margin:18px auto 0;border-radius:12px}
+button,.link{width:100%;display:block;border:0;border-radius:11px;padding:14px;margin-top:14px;background:#172033;color:white;font-weight:700;text-align:center;text-decoration:none;cursor:pointer}
+button:disabled{opacity:.5}.copy{background:#e8edf4;color:#172033}.task{border:1px solid #e0e5ed;border-radius:14px;overflow:hidden;margin-top:18px}
+.head{padding:16px;background:#f7f9fc}.head h2{margin:0 0 7px}.head p{margin:0;color:#5f6979;white-space:pre-wrap}
+pre{margin:0;padding:18px;background:#101522;color:#eef3ff;overflow:auto;font-size:13px;line-height:1.5}.bottom{padding:16px}
+.ok,.bad{padding:10px;border-radius:9px;margin:10px 0}.ok{background:#edf7ef}.bad{background:#fff2f1}#status{margin-top:18px;font-weight:700}
+</style>
+</head>
+<body>
+<main><section class="card">
+<h1>Scala ze zdjęcia</h1>
+<p class="sub">Jedno zdjęcie może zawierać kilka zadań. Każde zostanie rozwiązane i zapisane osobno na GitHubie.</p>
+<div id="repo" class="repo">Sprawdzam konfigurację...</div>
+<label class="upload" for="image"><b>📷 Zrób zdjęcie całej kartki</b><br><small>Nie ucinaj nagłówków Zadanie 1 / 2 / 3</small></label>
+<input id="image" type="file" accept="image/*" capture="environment">
+<img id="preview">
+<button id="solve" disabled>Rozwiąż wszystkie zadania i wyślij na GitHub</button>
+<div id="status"></div>
+<div id="results"></div>
+</section></main>
+<script>
+const image=document.querySelector("#image"),preview=document.querySelector("#preview"),
+solve=document.querySelector("#solve"),status=document.querySelector("#status"),
+results=document.querySelector("#results"),repo=document.querySelector("#repo");
+
+fetch("/api/config").then(r=>r.json()).then(c=>{
+ repo.textContent=c.autoPush?`GitHub: ${c.githubOwner}/${c.githubRepo} → ${c.githubBranch}`:"GitHub nie jest skonfigurowany";
+}).catch(()=>repo.textContent="Błąd konfiguracji GitHub");
+
+image.onchange=()=>{
+ const f=image.files[0]; if(!f)return;
+ preview.src=URL.createObjectURL(f); preview.style.display="block"; solve.disabled=false;
+ results.innerHTML=""; status.textContent="";
+};
+
+const esc=s=>String(s??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");
+
+function taskBox(t){
+ const el=document.createElement("article"); el.className="task";
+ const gh=t.github
+ ? `<div class="ok">✅ Zapisano: ${esc(t.github.path)}</div><a class="link" target="_blank" href="${t.github.url}">Otwórz na GitHubie</a>`
+ : `<div class="bad">⚠️ GitHub: ${esc(t.githubError||"błąd")}</div>`;
+ el.innerHTML=`<div class="head"><h2>Zadanie ${t.number} — ${esc(t.title)}</h2><p>${esc(t.recognizedText)}</p></div>
+ <pre><code>${esc(t.code)}</code></pre>
+ <div class="bottom"><p>${esc(t.explanation)}</p>${gh}<button class="copy">Kopiuj kod</button></div>`;
+ el.querySelector(".copy").onclick=async e=>{await navigator.clipboard.writeText(t.code);e.target.textContent="Skopiowano!";setTimeout(()=>e.target.textContent="Kopiuj kod",1200)};
+ return el;
+}
+
+solve.onclick=async()=>{
+ const f=image.files[0]; if(!f)return;
+ const fd=new FormData(); fd.append("image",f);
+ solve.disabled=true; status.textContent="Rozpoznaję wszystkie zadania..."; results.innerHTML="";
+ try{
+   const r=await fetch("/api/solve",{method:"POST",body:fd});
+   const d=await r.json();
+   if(!r.ok)throw new Error(d.error||"Błąd");
+   status.textContent=`✅ Rozpoznano ${d.count} zadań.`;
+   d.tasks.forEach(t=>results.appendChild(taskBox(t)));
+ }catch(e){status.textContent="❌ "+e.message}
+ finally{solve.disabled=false}
+};
+</script>
+</body>
+</html>

@@ -1,25 +1,25 @@
-# Scala Photo Solver – auto GitHub
+# Scala Photo Solver MULTI
 
-## Najlepszy układ
-- `projekt` – repo z tą stroną, podpięte do Render
-- `zadania-scala` – osobne repo na wygenerowane zadania
+Obsługuje wiele zadań z jednego zdjęcia i zapisuje każde osobno do repo `zadania-scala`.
 
-## Render / Environment Variables
-OPENAI_API_KEY=...
+Podmień w repo `projekt`:
+- server.js
+- public/index.html
+- package.json
+- .gitignore
+- .env.example
+
+Potem:
+git add .
+git commit -m "Obsluga wielu zadan"
+git push origin main
+
+Render z Auto-Deploy wdroży zmianę.
+
+ENV:
+OPENAI_API_KEY
 OPENAI_MODEL=gpt-5-mini
-GITHUB_TOKEN=...
-GITHUB_OWNER=twoj_login
+GITHUB_TOKEN
+GITHUB_OWNER=krisu-sochan
 GITHUB_REPO=zadania-scala
 GITHUB_BRANCH=main
-
-Token GitHub: dostęp tylko do repo `zadania-scala`, permission `Contents: Read and write`.
-
-## Laptop
-Pierwszy raz:
-`git clone https://github.com/TWOJ_LOGIN/zadania-scala.git`
-
-Później:
-`cd zadania-scala`
-`git pull`
-
-Każde zadanie trafia do `zadania/<data>_<tytul>/Main.scala`.
