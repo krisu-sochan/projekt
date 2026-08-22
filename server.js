@@ -101,40 +101,228 @@ app.post("/api/solve", upload.single("image"), async (req, res) => {
     const prompt = `
 Przeanalizuj CAŁE zdjęcie kartki z zadaniami programistycznymi i rozwiąż WSZYSTKIE osobne zadania.
 
-Jeśli widzisz "Zadanie 1", "Zadanie 2", "Zadanie 3", MUSISZ zwrócić trzy osobne elementy w tasks.
-Nie kończ po pierwszym zadaniu.
+Jeżeli na zdjęciu są:
+Zadanie 1
+Zadanie 2
+Zadanie 3
 
-Zasady:
-- Scala 3.
-- Przestrzegaj dokładnie wszystkich ograniczeń z kartki.
-- Kod ma być prosty i typowy dla laboratoriów, bez długich komentarzy i ozdobnych bannerów.
-- Nie dodawaj zbędnych funkcji ani zabezpieczeń.
-- Jeśli zadanie zabrania var, pętli, rekurencji, metod standardowych itp., przestrzegaj tego.
+to zwróć dokładnie 3 osobne rozwiązania.
 
-Dla zadań z aktorami używaj WYŁĄCZNIE klasycznego Apache Pekko zgodnego ze stylem scala3-pekko.g8:
+BARDZO WAŻNY STYL KODU:
+
+Kod ma wyglądać jak prosty kod pisany przez studenta na zajęciach w Scala 3.
+
+NIE komplikuj rozwiązania.
+NIE twórz dodatkowych objectów, klas, wrapperów ani abstrakcji, jeśli treść zadania tego nie wymaga.
+
+Dla zwykłych zadań Scala:
+- preferuj zwykłe funkcje:
+  def nazwa(...): Typ = {
+    ...
+  }
+
+- jeśli potrzebny jest main, używaj:
+  @main
+  def main(): Unit = {
+    ...
+  }
+
+- NIE używaj:
+  object Main
+  object Solution
+  object MatrixOperations
+  object MatrixTailRec
+  object Zadanie1
+
+chyba że treść zadania WYRAŹNIE wymaga obiektu.
+
+Funkcje pomocnicze pisz bezpośrednio wewnątrz funkcji głównej albo obok niej.
+
+Kod powinien być podobny stylistycznie do:
+
+def funkcja(
+    lista: List[Int]
+): List[Int] = {
+
+  @tailrec
+  def loop(
+      pozostale: List[Int],
+      acc: List[Int]
+  ): List[Int] = pozostale match {
+
+    case Nil =>
+      acc
+
+    case head :: tail =>
+      loop(
+        tail,
+        head :: acc
+      )
+  }
+
+  loop(lista, Nil)
+}
+
+Czyli:
+- zwykłe def,
+- pattern matching,
+- @tailrec gdy wymagane,
+- val zamiast var,
+- proste funkcje pomocnicze,
+- bez architektury aplikacyjnej,
+- bez zbędnych typów,
+- bez zaawansowanych konstrukcji.
+
+FORMATOWANIE:
+- może być czytelnie rozbite na kilka linii,
+- nazwy zmiennych proste: a, b, acc, wynik, wiersz, kolumna, reszta,
+- komentarzy bardzo mało,
+- nie dodawaj wielkich komentarzy typu ========,
+- nie tłumacz kodu komentarzami linia po linii.
+
+OGRANICZENIA Z ZADANIA MAJĄ NAJWYŻSZY PRIORYTET:
+- jeśli zabronione są var -> żadnego var,
+- jeśli zabronione są pętle -> żadnego for/while,
+- jeśli zabroniona jest rekurencja -> żadnej rekurencji,
+- jeśli wymagana jest rekurencja ogonowa -> @tailrec,
+- jeśli zabronione są reverse, length, size itp. -> nie używaj ich,
+- jeśli wolno samemu zaimplementować reverse/length -> zrób prostą własną funkcję,
+- jeśli zabronione jest ++, :::, :+ -> absolutnie ich nie używaj.
+
+KOLEKCJE:
+
+Jeżeli zadanie mówi "korzystając z metod przetwarzania kolekcji":
+- używaj map, flatMap, zip, foldLeft, groupBy, filter itp.,
+- NIE używaj rekurencji,
+- NIE używaj var,
+- NIE używaj pętli,
+- rozwiązanie ma być możliwie krótkie.
+
+PEKKO:
+
+Jeżeli zadanie dotyczy aktorów, kod ma wyglądać dokładnie w stylu klasycznych aktorów używanych w projekcie scala3-pekko.g8.
+
+Używaj:
+
 import org.apache.pekko.actor.*
-class X extends Actor with ActorLogging
-def receive: Receive = { ... }
-ActorSystem(...)
-Props(...)
-context.actorOf(...)
-context.become(...)
 
-Nie używaj Pekko Typed, Behaviors ani ActorSystem[Command].
+case class ...
+case object ...
+
+class Pracownik extends Actor with ActorLogging {
+
+  def receive: Receive = {
+
+    case ... =>
+      ...
+  }
+}
+
+class Szef extends Actor with ActorLogging {
+
+  def receive: Receive = {
+
+    case ... =>
+      ...
+
+      context.become(
+        stan(
+          ...
+        )
+      )
+  }
+
+  def stan(
+      ...
+  ): Receive = {
+
+    case ... =>
+      ...
+  }
+}
+
+@main
+def mainProg(): Unit = {
+
+  val system =
+    ActorSystem(
+      "Nazwa"
+    )
+
+  val szef =
+    system.actorOf(
+      Props[Szef](),
+      "szef"
+    )
+
+  szef ! ...
+}
+
+Dla Pekko:
+- import org.apache.pekko.actor.*
+- Actor
+- ActorLogging
+- ActorRef
+- Props
+- ActorSystem
+- context.actorOf
+- context.become
+- sender()
+- self
+
+NIE używaj:
+- org.apache.pekko.actor.typed
+- Behaviors
+- ActorSystem[Command]
+- Behavior[...]
+- sealed trait Command
+- klasycznych wzorców z Pekko Typed.
+
+Jeżeli zadanie wymaga aktora Szef i Pracownik, NAZWIJ klasy:
+class Szef
+class Pracownik
+
+Nie zastępuj ich innymi nazwami.
+
+Jeżeli treść podaje dokładne komunikaty, np.:
+
+Oblicz(A: List[List[Int]], B: List[List[Int]])
+Init(A: List[List[Int]], B: List[List[Int]])
+Oblicz(i: Int, j: Int)
+
+to użyj właśnie takich komunikatów, a nie własnych odpowiedników.
+
+NIE dodawaj:
+- dodatkowego Managera,
+- Supervisora,
+- Coordinatora,
+- dodatkowych case class,
+- Future,
+- Promise,
+- ask pattern,
+- timeoutów,
+
+jeżeli zadanie ich nie wymaga.
+
+Najważniejsze:
+rozwiązanie powinno być możliwie bezpośrednim przełożeniem treści zadania na kod.
 
 Zwróć WYŁĄCZNIE JSON:
+
 {
   "tasks": [
     {
       "number": 1,
       "title": "krótki tytuł",
       "kind": "scala albo pekko",
-      "recognizedText": "krótkie streszczenie zadania i ograniczeń",
-      "code": "pełny kod Scala bez markdown",
-      "explanation": "krótkie wyjaśnienie"
+      "recognizedText": "krótkie streszczenie zadania i najważniejszych ograniczeń",
+      "code": "pełny kod Scala bez znaczników markdown",
+      "explanation": "maksymalnie 2-3 krótkie zdania"
     }
   ]
 }
+
+Nie dodawaj tekstu przed JSON ani po JSON.
 `.trim();
 
     const response = await openai.responses.create({
